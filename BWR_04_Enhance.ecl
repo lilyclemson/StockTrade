@@ -95,7 +95,3 @@ withoutID := PROJECT
     );
 
 OUTPUT(withoutID, /*RecStruct*/, StockData.Files.Enhanced.PATH, OVERWRITE, COMPRESSED);
-
-groupedBySymbol2 := GROUP(SORT(withoutID, symbol, trade_date, LOCAL), symbol, LOCAL);
-first10 := TOPN(groupedBySymbol2, 20, symbol, trade_date);
-OUTPUT(CHOOSEN(first10, 1000), NAMED('first10'));
