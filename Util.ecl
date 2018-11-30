@@ -2,6 +2,12 @@ IMPORT Std;
 
 EXPORT Util := MODULE
 
+    EXPORT Constants := MODULE
+
+        EXPORT MOVING_AVE_DAYS := 5;
+
+    END;
+
     EXPORT DescribeExchangeCode(STRING1 exchCode) := CASE
         (
             Std.Str.ToUpperCase(exchCode),

@@ -121,10 +121,10 @@ EXPORT Files := MODULE
             DECIMAL9_2      opening_price_change;       // Change in price as compared to previous day
             DECIMAL9_2      closing_price_change;       // Change in price as compared to previous day
             INTEGER4        shares_traded_change;       // Change in volume as compared to previous day
-            DECIMAL9_2      moving_ave_opening_price;   // Average of previous 5 days opening price
-            DECIMAL9_2      moving_ave_high_price;      // Average of previous 5 days high price
-            DECIMAL9_2      moving_ave_low_price;       // Average of previous 5 days low price
-            DECIMAL9_2      moving_ave_closing_price;   // Average of previous 5 days closing price
+            DECIMAL9_2      moving_ave_opening_price;   // Average of previous StockData.Util.Constants.MOVING_AVE_DAYS days opening price
+            DECIMAL9_2      moving_ave_high_price;      // Average of previous StockData.Util.Constants.MOVING_AVE_DAYS days high price
+            DECIMAL9_2      moving_ave_low_price;       // Average of previous StockData.Util.Constants.MOVING_AVE_DAYS days low price
+            DECIMAL9_2      moving_ave_closing_price;   // Average of previous StockData.Util.Constants.MOVING_AVE_DAYS days closing price
         END;
 
         EXPORT PATH := PATH_PREFIX + '::enhanced_data';

@@ -3,8 +3,6 @@ IMPORT Std;
 
 #WORKUNIT('name', 'Stock Data: Enhance Cleaned Data');
 
-MOVING_AVE_DAYS := 5;
-
 baseData := StockData.Files.Cleaned.ds;
 
 enhancedData1 := PROJECT
@@ -70,15 +68,15 @@ withMovingAve := DENORMALIZE
         ungroupedData,
         LEFT.symbol = RIGHT.symbol
             AND RIGHT.id > 0
-            AND RIGHT.id BETWEEN (LEFT.id - MOVING_AVE_DAYS) AND (LEFT.id - 1),
+            AND RIGHT.id BETWEEN (LEFT.id - StockData.Util.Constants.MOVING_AVE_DAYS) AND (LEFT.id - 1),
         GROUP,
         TRANSFORM
             (
                 RECORDOF(LEFT),
-                SELF.moving_ave_opening_price := IF(COUNT(ROWS(RIGHT)) = MOVING_AVE_DAYS, AVE(ROWS(RIGHT), opening_price), 0),
-                SELF.moving_ave_high_price := IF(COUNT(ROWS(RIGHT)) = MOVING_AVE_DAYS, AVE(ROWS(RIGHT), high_price), 0),
-                SELF.moving_ave_low_price := IF(COUNT(ROWS(RIGHT)) = MOVING_AVE_DAYS, AVE(ROWS(RIGHT), low_price), 0),
-                SELF.moving_ave_closing_price := IF(COUNT(ROWS(RIGHT)) = MOVING_AVE_DAYS, AVE(ROWS(RIGHT), closing_price), 0),
+                SELF.moving_ave_opening_price := IF(COUNT(ROWS(RIGHT)) = StockData.Util.Constants.MOVING_AVE_DAYS, AVE(ROWS(RIGHT), opening_price), 0),
+                SELF.moving_ave_high_price := IF(COUNT(ROWS(RIGHT)) = StockData.Util.Constants.MOVING_AVE_DAYS, AVE(ROWS(RIGHT), high_price), 0),
+                SELF.moving_ave_low_price := IF(COUNT(ROWS(RIGHT)) = StockData.Util.Constants.MOVING_AVE_DAYS, AVE(ROWS(RIGHT), low_price), 0),
+                SELF.moving_ave_closing_price := IF(COUNT(ROWS(RIGHT)) = StockData.Util.Constants.MOVING_AVE_DAYS, AVE(ROWS(RIGHT), closing_price), 0),
                 SELF := LEFT
             ),
         LOCAL
