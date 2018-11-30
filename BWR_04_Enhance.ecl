@@ -3,6 +3,8 @@ IMPORT Std;
 
 #WORKUNIT('name', 'Stock Data: Enhance Cleaned Data');
 
+MOVING_AVE_DAYS := 5;
+
 baseData := StockData.Files.Cleaned.ds;
 
 enhancedData1 := PROJECT
@@ -28,7 +30,9 @@ enhancedData1 := PROJECT
             )
     );
 
-groupedData := GROUP(SORT(enhancedData1, symbol, trade_date), symbol);
+distDS := DISTRIBUTE(enhancedData1, HASH32(symbol));
+
+groupedData := GROUP(SORT(distDS, symbol, trade_date, LOCAL), symbol, LOCAL);
 
 withChanges := ITERATE
     (
@@ -43,6 +47,55 @@ withChanges := ITERATE
             )
     );
 
-ungroupedData := UNGROUP(withChanges);
+// Add moving averages
+withID := PROJECT
+    (
+        withChanges,
+        TRANSFORM
+            (
+                {
+                    INTEGER4    id,
+                    RECORDOF(LEFT)
+                },
+                SELF.id := COUNTER,
+                SELF := LEFT
+            )
+    );
 
-OUTPUT(ungroupedData, /*RecStruct*/, StockData.Files.Enhanced.PATH, OVERWRITE, COMPRESSED);
+ungroupedData := UNGROUP(withID);
+
+withMovingAve := DENORMALIZE
+    (
+        ungroupedData,
+        ungroupedData,
+        LEFT.symbol = RIGHT.symbol
+            AND RIGHT.id > 0
+            AND RIGHT.id BETWEEN (LEFT.id - MOVING_AVE_DAYS) AND (LEFT.id - 1),
+        GROUP,
+        TRANSFORM
+            (
+                RECORDOF(LEFT),
+                SELF.moving_ave_opening_price := IF(COUNT(ROWS(RIGHT)) = MOVING_AVE_DAYS, AVE(ROWS(RIGHT), opening_price), 0),
+                SELF.moving_ave_high_price := IF(COUNT(ROWS(RIGHT)) = MOVING_AVE_DAYS, AVE(ROWS(RIGHT), high_price), 0),
+                SELF.moving_ave_low_price := IF(COUNT(ROWS(RIGHT)) = MOVING_AVE_DAYS, AVE(ROWS(RIGHT), low_price), 0),
+                SELF.moving_ave_closing_price := IF(COUNT(ROWS(RIGHT)) = MOVING_AVE_DAYS, AVE(ROWS(RIGHT), closing_price), 0),
+                SELF := LEFT
+            ),
+        LOCAL
+    );
+
+withoutID := PROJECT
+    (
+        withMovingAve,
+        TRANSFORM
+            (
+                RECORDOF(LEFT) - [id],
+                SELF := LEFT
+            )
+    );
+
+OUTPUT(withoutID, /*RecStruct*/, StockData.Files.Enhanced.PATH, OVERWRITE, COMPRESSED);
+
+groupedBySymbol2 := GROUP(SORT(withoutID, symbol, trade_date, LOCAL), symbol, LOCAL);
+first10 := TOPN(groupedBySymbol2, 20, symbol, trade_date);
+OUTPUT(CHOOSEN(first10, 1000), NAMED('first10'));

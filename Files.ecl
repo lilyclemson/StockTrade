@@ -110,17 +110,21 @@ EXPORT Files := MODULE
 
         EXPORT Layout := RECORD
             Cleaned.Layout;
-            STRING16        symbol;                 // Exchange name + stock symbol
-            UNSIGNED2       trade_year;             // Year portion of trade_date
-            UNSIGNED1       trade_month;            // Month portion of trade_date
-            UNSIGNED1       trade_day;              // Day portion of trade_date
-            UNSIGNED1       trade_day_of_week;      // Range 1-7, Sunday = 1
-            UNSIGNED1       trade_quarter;          // Calendar quarter; range 1-4
-            UNSIGNED1       trade_day_of_year;      // Range 1-366
-            UNSIGNED1       trade_day_of_quarter;   // Range 1-92
-            DECIMAL9_2      opening_price_change;   // Change in price as compared to previous day
-            DECIMAL9_2      closing_price_change;   // Change in price as compared to previous day
-            INTEGER4        shares_traded_change;   // Change in volume as compared to previous day
+            STRING16        symbol;                     // Exchange name + stock symbol
+            UNSIGNED2       trade_year;                 // Year portion of trade_date
+            UNSIGNED1       trade_month;                // Month portion of trade_date
+            UNSIGNED1       trade_day;                  // Day portion of trade_date
+            UNSIGNED1       trade_day_of_week;          // Range 1-7, Sunday = 1
+            UNSIGNED1       trade_quarter;              // Calendar quarter; range 1-4
+            UNSIGNED1       trade_day_of_year;          // Range 1-366
+            UNSIGNED1       trade_day_of_quarter;       // Range 1-92
+            DECIMAL9_2      opening_price_change;       // Change in price as compared to previous day
+            DECIMAL9_2      closing_price_change;       // Change in price as compared to previous day
+            INTEGER4        shares_traded_change;       // Change in volume as compared to previous day
+            DECIMAL9_2      moving_ave_opening_price;   // Average of previous 5 days opening price
+            DECIMAL9_2      moving_ave_high_price;      // Average of previous 5 days high price
+            DECIMAL9_2      moving_ave_low_price;       // Average of previous 5 days low price
+            DECIMAL9_2      moving_ave_closing_price;   // Average of previous 5 days closing price
         END;
 
         EXPORT PATH := PATH_PREFIX + '::enhanced_data';
