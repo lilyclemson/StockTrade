@@ -3,6 +3,8 @@ IMPORT Std;
 EXPORT Files := MODULE
 
     EXPORT PATH_PREFIX := '~dcamper::stock_data';
+    EXPORT TRADE_START_DATE := 20020108;
+    EXPORT TRADE_END_DATAE:= 20181101;
 
     //--------------------------------------------------------------------------
 
@@ -151,5 +153,37 @@ EXPORT Files := MODULE
         EXPORT ds := DATASET(PATH, Layout, FLAT);
 
     END; // Summarized module
+        EXPORT PATH_PREFIX1 := '~thor::lilix::Stock_Data';
+    EXPORT Features := MODULE
+
+        EXPORT Layout := RECORD(Enhanced.Layout)
+            REAL4              shares_traded_change_rate; // Volume Change rate in volume as 
+                                                          //compared to previous day
+            UNSIGNED4          direction;                 //0->down; 1-->up; 2-->even           
+        END;
+
+        EXPORT PATH := PATH_PREFIX1 + '::full_data';
+
+        EXPORT ds := DATASET(PATH, Layout, FLAT);
+    END;
+
+    EXPORT Preprocessing := MODULE
+
+        EXPORT Layout := RECORD
+            Enhanced.Layout.opening_price_change;
+            Enhanced.Layout.closing_price_change;
+            Enhanced.Layout.moving_ave_opening_price;
+            Enhanced.Layout.moving_ave_high_price;
+            Enhanced.Layout.moving_ave_low_price;
+            Enhanced.Layout.moving_ave_closing_price;       
+            Features.Layout.shares_traded_change_rate;
+            Features.Layout.direction;
+        END;
+
+        EXPORT PATH := PATH_PREFIX1 + '::WORKING_Data';
+        
+        EXPORT ds := DATASET(PATH, Layout, FLAT);
+    END;
+
 
 END;
