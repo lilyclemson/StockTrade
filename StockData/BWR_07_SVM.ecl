@@ -6,7 +6,7 @@ IMPORT ML_Core.Types AS Types;
 IMPORT SupportVectorMachines AS SVM;
 IMPORT SVM.LibSVM;
 
-#WORKUNIT('name', 'Stock Data: SVM');
+#WORKUNIT('name', 'Stock Data: SVM - Multi Wi');
 
 TRADE_START_DATE := StockData.Util.Constants.TRADE_START_DATE;
 TRADE_END_DATE := StockData.Util.Constants.TRADE_END_DATE;
