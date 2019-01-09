@@ -1,10 +1,11 @@
 IMPORT StockData;
 IMPORT Std;
 
-#WORKUNIT('name', 'Stock Data: Enhance Cleaned Data W Full Features');
+#WORKUNIT('name', 'Stock Data: Enhance Cleaned Data With Full Features');
 
 baseData := StockData.Files.Enhanced.ds;
 
+// Rewrite the data into the record structure that is needed for ITERATE
 enhancedData1 := PROJECT
     (
         baseData,
@@ -16,8 +17,10 @@ enhancedData1 := PROJECT
             )
     );
 
+// Group all records around their full symbol, sorted by trade date
 groupedData := GROUP(SORT(enhancedData1, symbol, trade_date), symbol);
 
+// Append new features useful for other analytics on a per-symbol basis
 withChanges := ITERATE
     (
         groupedData,
@@ -25,17 +28,16 @@ withChanges := ITERATE
             (
                 RECORDOF(LEFT),
                 SELF.shares_traded_change_rate := RIGHT.shares_traded_change / LEFT.shares_traded,
-                SELF.direction := MAP(
-                                        RIGHT.closing_price_change < 0 =>0,
-                                        RIGHT.closing_price_change > 0 => 1, 2), 
-                SELF := RIGHT)
+                SELF.direction := MAP
+                    (
+                        RIGHT.closing_price_change < 0 => 0,
+                        RIGHT.closing_price_change > 0 => 1,
+                        2 // closing price is unchanged
+                    ), 
+                SELF := RIGHT
+            )
     );
 
 ungroupedData := UNGROUP(withChanges);
 
 OUTPUT(ungroupedData, /*RecStruct*/, StockData.Files.Features.PATH, OVERWRITE, COMPRESSED);
-
-/*
-working_data := PROJECT(ungroupedData, TRANSFORM(StockData.Files.Preprocessing.Layout,
-                                                SELF := LEFT));
-*/

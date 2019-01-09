@@ -3,6 +3,8 @@ IMPORT Std;
 
 #WORKUNIT('name', 'Stock Data: Summarize Cleaned Data');
 
+// Append a 'symbol' field that contains the stock exchange code and stock
+// symbol code in <exchange>:<symbol> format
 baseData := PROJECT
     (
         StockData.Files.Cleaned.ds,
@@ -17,6 +19,7 @@ baseData := PROJECT
             )
     );
 
+// Compute some stats on a per-symbol basis
 perSymbol := TABLE
     (
         baseData,
