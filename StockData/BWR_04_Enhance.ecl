@@ -5,6 +5,9 @@ IMPORT Std;
 
 baseData := StockData.Files.Cleaned.ds;
 
+// Append a 'symbol' field that contains the stock exchange code and stock
+// symbol code in <exchange>:<symbol> format; also extract and append
+// information from the trade date to expose more features for analytics
 enhancedData1 := PROJECT
     (
         baseData,
@@ -28,10 +31,18 @@ enhancedData1 := PROJECT
             )
     );
 
+// Explicitly distribute the data based on the full <exchange>:<symbol> value;
+// all records with the same full value will wind up on the same Thor node
 distDS := DISTRIBUTE(enhancedData1, HASH32(symbol));
 
+// Group all records around their full symbol, sorted by trade date; note that
+// both the SORT and GROUP operation can be LOCAL because we explicitly
+// distributed the data that way
 groupedData := GROUP(SORT(distDS, symbol, trade_date, LOCAL), symbol, LOCAL);
 
+// Within each group, iterate through the records and compute changes between
+// one record and the next; within the transform, LEFT is the previous record
+// created and RIGHT is the next record from the dataset
 withChanges := ITERATE
     (
         groupedData,
@@ -45,7 +56,9 @@ withChanges := ITERATE
             )
     );
 
-// Add moving averages
+// Add a unique ID value to each record within a symbol group; this ID will
+// be used to find trade date records within a certain number of business days
+// within each other (dates are less reliable due to weekends, holidays, etc)
 withID := PROJECT
     (
         withChanges,
@@ -60,8 +73,13 @@ withID := PROJECT
             )
     );
 
+// Ungroup the data, so subsequent operations operate on the entire dataset
+// rather than each group individually
 ungroupedData := UNGROUP(withID);
 
+// Perform a self-join where LEFT is one record and ROWS(RIGHT) is the
+// collection of records with the same symbol and within
+// StockData.Util.Constants.MOVING_AVE_DAYS days in the past
 withMovingAve := DENORMALIZE
     (
         ungroupedData,
@@ -82,6 +100,7 @@ withMovingAve := DENORMALIZE
         LOCAL
     );
 
+// Remove the ID value we added in order to calculate the moving averages
 withoutID := PROJECT
     (
         withMovingAve,
@@ -92,4 +111,5 @@ withoutID := PROJECT
             )
     );
 
+// Write the result as a native Thor logical file
 OUTPUT(withoutID, /*RecStruct*/, StockData.Files.Enhanced.PATH, OVERWRITE, COMPRESSED);

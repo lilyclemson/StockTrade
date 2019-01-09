@@ -158,21 +158,23 @@ EXPORT Files := MODULE
     EXPORT Features := MODULE
 
         EXPORT Layout := RECORD(Enhanced.Layout)
-            Types.t_RecordID   id;                        //Append ID to each instance
-            REAL4              shares_traded_change_rate; // Volume Change rate in volume as
-                                                          //compared to previous day
-            UNSIGNED4          direction;                 //0->down; 1-->up; 2-->even
+            Types.t_RecordID   id;                        // Append ID to each instance
+            REAL4              shares_traded_change_rate; // Volume Change rate in volume as compared to previous day
+            UNSIGNED4          direction;                 // 0->down; 1->up; 2->even
         END;
 
         EXPORT PATH := PATH_PREFIX + '::full_data';
 
         EXPORT ds := DATASET(PATH, Layout, FLAT);
-    END;
+
+    END; // Features module
+
+    //--------------------------------------------------------------------------
 
     EXPORT Preprocessing := MODULE
 
         EXPORT Layout := RECORD
-            Types.t_RecordID id;
+            Features.Layout.id;
             Enhanced.Layout.opening_price_change;
             Enhanced.Layout.closing_price_change;
             Enhanced.Layout.moving_ave_opening_price;
@@ -183,9 +185,10 @@ EXPORT Files := MODULE
             Features.Layout.direction;
         END;
 
-        EXPORT PATH := PATH_PREFIX + '::WORKING_Data';
+        EXPORT PATH := PATH_PREFIX + '::working_Data';
         
         EXPORT ds := DATASET(PATH, Layout, FLAT);
-    END;
+
+    END; // Preprocessing module
 
 END;
