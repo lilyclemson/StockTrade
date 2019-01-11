@@ -1,3 +1,4 @@
+// Record definition describing the data
 DataRec := RECORD
     UNSIGNED4       trade_date;
     STRING1         exchange_code;
@@ -36,20 +37,25 @@ theData := DATASET
         FLAT
     );
 
-// Show the first 100 records in the file
-OUTPUT(theData, NAMED('data_sample'));
+/*
+Find the average number of shares traded per week day.  This is equivalent to
+the following SQL statement:
 
-// Show the first 100 trade days for IBM
-OUTPUT(theData(symbol = 'NYSE:IBM'), NAMED('ibm_trades_sample'));
+    SELECT trade_day_of_week, AVE(shares_traded) AS num_shares_traded
+    FROM theData
+    GROUP BY trade_day_of_week;
+*/
+aveSharesTradedPerDay := TABLE
+    (
+        theData,
+        {
+            trade_day_of_week,
+            UNSIGNED6   num_shares_traded := AVE(GROUP, shares_traded)
+        },
+        trade_day_of_week
+    );
 
-// Show the number of records in the file
-recordCount := COUNT(theData);
-OUTPUT(recordCount, NAMED('number_of_records'));
+// Make sure the result is in ascending order by day of week
+sortedResult := SORT(aveSharesTradedPerDay, trade_day_of_week);
 
-// Show the maximum number of shares traded in any single day
-maxShares := MAX(theData, shares_traded);
-OUTPUT(maxShares, NAMED('max_shares_traded'));
-
-// Show the minimum number of shares (above zero) traded in any single day
-minShares := MIN(theData(shares_traded > 0), shares_traded);
-OUTPUT(minShares, NAMED('min_shares_traded'));
+OUTPUT(sortedResult, NAMED('shares_traded_per_day'));
