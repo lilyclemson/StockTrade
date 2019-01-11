@@ -157,7 +157,8 @@ EXPORT Files := MODULE
 
     EXPORT Features := MODULE
 
-        EXPORT Layout := RECORD(Enhanced.Layout)
+        EXPORT Layout := RECORD
+            Enhanced.Layout;
             Types.t_RecordID   id;                        // Append ID to each instance
             REAL4              shares_traded_change_rate; // Volume Change rate in volume as compared to previous day
             UNSIGNED4          direction;                 // 0->down; 1->up; 2->even
