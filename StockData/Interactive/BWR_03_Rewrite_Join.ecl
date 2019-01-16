@@ -93,8 +93,8 @@ withStats := JOIN
         TRANSFORM
             (
                 {
-                    RECORDOF(LEFT),
-                    DECIMAL9_2      relative_closing_price
+                    RECORDOF(LEFT),                             // Copy all fields from 'withID' dataset
+                    DECIMAL9_2      relative_closing_price      // New field
                 },
                 SELF.relative_closing_price := (LEFT.closing_price - RIGHT.closing_price_mean) / RIGHT.closing_price_std_dev,
                 SELF := LEFT
@@ -102,4 +102,5 @@ withStats := JOIN
         LOOKUP
     );
 
+// Output 1000 records of the results, not just 100
 OUTPUT(CHOOSEN(withStats, 1000), NAMED('closing_prices'));
