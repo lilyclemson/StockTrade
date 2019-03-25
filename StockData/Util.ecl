@@ -2,6 +2,7 @@ IMPORT Std;
 IMPORT ML_Core;
 IMPORT ML_Core.Types AS Types;
 IMPORT StockData;
+IMPORT LogisticRegression AS LR;
 
 EXPORT Util := MODULE
 
@@ -47,51 +48,46 @@ EXPORT Util := MODULE
     END;
 
     // Return Stock Data based on the exchange code, ticket symbol and provided year
-    EXPORT GetDataByYear(STRING4 code = 'O',
+    EXPORT LoadData(STRING4 code = 'O',
                          STRING4 ticket = 'AAPL',
                          UNSIGNED4 start_year = Constants.TRADE_START_YEAR,
-                         UNSIGNED4 end_year = Constants.TRADE_END_YEAR) := MODULE
+                         UNSIGNED4 end_year = Constants.TRADE_END_YEAR) := FUNCTION
 
-        SHARED fullSymbol := MakeFullSymbol(code, ticket);
-
-        SHARED baseData := StockData.Files.Features.ds(symbol = fullSymbol);
-
-        //Valid Trading Dates
-        SHARED ByYear(UNSIGNED4 s = start_year, UNSIGNED4 e = end_year) := FUNCTION
-            tradeperiod := StockData.Files.Summarized.ds(symbol = fullSymbol);
-            first_seen_year := STD.Date.Year(tradeperiod[1].first_seen_date); // 20020101
-            last_seen_year := STD.Date.Year(tradeperiod[1].last_seen_date); // 20181101
-            syear := MAP
-                (
-                    e < s                           => ERROR('INVALID INPUTS'),
-                    START_YEAR > END_YEAR           => ERROR('INVALID TRADE DATE'),
-                    first_seen_year < START_YEAR    => MAX(Constants.TRADE_START_YEAR, s),
-                    MAX(first_seen_year, s)
-                );
-            eyear := MAP
-                (
-                    e < s                       => ERROR('INVALID INPUTS'),
-                    START_YEAR > END_YEAR       => ERROR('INVALID TRADE DATE'),
-                    last_seen_year > END_YEAR   => MIN(Constants.TRADE_END_YEAR, e),
-                    MIN(last_seen_year, e)
-                );
-            ds := baseData(STD.Date.Year(trade_date) >= syear AND STD.Date.Year(trade_date) <= eyear);
-
-            RETURN ds;
-        END;
-
-        SHARED rst := ByYear();
-
-        EXPORT ds := PROJECT
+        fullSymbol := MakeFullSymbol(code, ticket);
+        baseData :=  StockData.Files.Features.ds(
+                                                stock_symbol = 'AAPL' AND
+                                                (direction = 0 OR direction = 1) AND
+                                                STD.Date.Year(trade_date) >= start_year AND
+                                                STD.Date.Year(trade_date) <= end_year);
+        ds := PROJECT
             (
-                rst,
+                baseData,
                 TRANSFORM
                     (
                         StockData.Files.Preprocessing.Layout,
                         SELF.id := COUNTER,
                         SELF := LEFT
                     )
-                );
+            );
+        ML_Core.ToField(ds, trainset);
+        RETURN trainset;
     END;
-    
+    EXPORT LogisticRegression(UNSIGNED max_iter=200,
+                                        REAL8 epsilon=0.0001):= MODULE
+        EXPORT Fit(DATASET(ML_Core.Types.NumericField) ind,
+                                        DATASET(ML_Core.Types.NumericField) dep) := FUNCTION
+            m :=  LR.BinomialLogisticRegression(Max_Iter, epsilon);
+            DStrainInd_scaled:= Scaler(ind);
+            DStrainDpt := PROJECT(dep, TRANSFORM(Types.DiscreteField, SELF.number := 1, SELF := LEFT));
+            result := m.getModel(DStrainInd_scaled, DStrainDpt);
+            RETURN result;
+        END;
+    END;
+
+    EXPORT Predict(DATASET(Types.Layout_Model) m, DATASET(ML_Core.Types.NumericField) ind) := FUNCTION
+        DStrainInd_scaled:= Scaler(ind);
+        predictions := LR.BinomialLogisticRegression().Classify(m, DStrainInd_scaled);
+        result := PROJECT(predictions, TRANSFORM(RECORDOF(predictions)-conf-number, SELF := LEFT));
+        RETURN result;
+    END;
 END;
